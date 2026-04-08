@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { json } from "zod";
 import  {db} from "../db/db.js";
 import { matches } from "../db/schema.js";
 import { createMatchSchema } from "../validation/matchValidation.js";
