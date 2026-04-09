@@ -1,4 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws';
+import { wsArcjetConfig } from '../config/arcjet.js';
 
 
 function sendJSON(socket, data) {
@@ -16,7 +17,24 @@ function broadcast(wss, data) {
 export function setupWebSocketServer(server) {
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 * 1024 });
 
-  wss.on('connection', (socket) => {
+  wss.on('connection', async (socket, req) => {
+    if(wsArcjetConfig) {
+      try{
+        const decision = await wsArcjetConfig.protect(req);
+        if(decision.isDenied()){
+          const code = decision.reason.isRateLimit() ? 1013 : 1008; // 1013 for rate limit, 1008 for other denials
+          const reason = decision.reason.isRateLimit() ? "WebSocket connection closed due to rate limiting" : "WebSocket connection closed due to Arcjet security rules";
+          socket.close(code, reason);
+          return;
+        }
+      } catch (error) {
+        console.error("Arcjet WebSocket error:", error);
+        socket.close(1011, "WebSocket connection closed due to Arcjet error");
+        return;
+      }
+    }
+
+
     socket.isAlive = true;
     socket.on('pong', () => socket.isAlive = true);
     sendJSON(socket, {type: 'welcome', message: 'Welcome to SportsCast WebSocket!'});

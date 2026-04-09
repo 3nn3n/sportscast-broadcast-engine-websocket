@@ -7,6 +7,7 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 const server = http.createServer(app);
 import  {setupWebSocketServer} from './ws/server.js';
+import { getArcjetMiddleware } from './config/arcjet.js';
 
 
 app.use(express.json());
@@ -14,6 +15,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Welcome to SportsCast API!');
 });
+
+app.use(getArcjetMiddleware());
 
 app.use('/matches', matchRouter);
 
