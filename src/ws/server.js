@@ -15,26 +15,40 @@ function broadcast(wss, data) {
 }
 
 export function setupWebSocketServer(server) {
-  const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 * 1024 });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
 
-  wss.on('connection', async (socket, req) => {
-    if(wsArcjetConfig) {
-      try{
+  server.on('upgrade', async (req, socket, head) => {
+    if (req.url !== '/ws') {
+      socket.destroy();
+      return;
+    }
+
+    if (wsArcjetConfig) {
+      try {
         const decision = await wsArcjetConfig.protect(req);
-        if(decision.isDenied()){
-          const code = decision.reason.isRateLimit() ? 1013 : 1008; // 1013 for rate limit, 1008 for other denials
-          const reason = decision.reason.isRateLimit() ? "WebSocket connection closed due to rate limiting" : "WebSocket connection closed due to Arcjet security rules";
-          socket.close(code, reason);
+        if (decision.isDenied()) {
+          const statusCode = decision.reason.isRateLimit() ? 429 : 403;
+          const message = decision.reason.isRateLimit()
+            ? 'Too Many Requests'
+            : 'Forbidden';
+          socket.write(`HTTP/1.1 ${statusCode} ${message}\r\n\r\n`);
+          socket.destroy();
           return;
         }
       } catch (error) {
-        console.error("Arcjet WebSocket error:", error);
-        socket.close(1011, "WebSocket connection closed due to Arcjet error");
+        console.error('Arcjet WebSocket error:', error);
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+        socket.destroy();
         return;
       }
     }
 
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req);
+    });
+  });
 
+  wss.on('connection', (socket, req) => {
     socket.isAlive = true;
     socket.on('pong', () => socket.isAlive = true);
     sendJSON(socket, {type: 'welcome', message: 'Welcome to SportsCast WebSocket!'});
