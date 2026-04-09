@@ -30,7 +30,7 @@ matchRouter.get("/", async (req, res) => {
       res.status(200).json({ matches: data });
   }
   catch (error) {
-    res.status(500).json({ error: "Internal server error", details: json.stringify(error) });
+    res.status(500).json({ error: "Internal server error", details: JSON.stringify(error) });
   }
 });
 
@@ -40,7 +40,7 @@ matchRouter.post("/", async (req, res) => {
 
 
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid payload", details: json.stringify(parsed.error)});
+    return res.status(400).json({ error: "Invalid payload", details: JSON.stringify(parsed.error)});
   }
 
   try {
@@ -53,11 +53,15 @@ matchRouter.post("/", async (req, res) => {
       status: getMatchStatus(startTime, endTime),
     }).returning();
 
+    if(req.app.locals.broadcastMatchCreated) {
+      req.app.locals.broadcastMatchCreated(event);
+    }
+
     return res.status(201).json({ match: event });
 
   } 
   catch (error) {
     console.error("Error creating match:", error);
-    return res.status(500).json({ error: "Internal server error", details: json.stringify(error) });
+    return res.status(500).json({ error: "Internal server error", details: JSON.stringify(error) });
   }
 });
