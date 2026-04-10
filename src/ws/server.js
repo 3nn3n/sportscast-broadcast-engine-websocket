@@ -23,7 +23,7 @@ function cleanUpSubscriptions(socket) {
   for (const matchId of socket.subscriptions || []) {
     unsubscribeFromMatch(socket, matchId);
   }
-  socket.subscriptions = [];
+  socket.subscriptions = new Set();
 }
 
 
