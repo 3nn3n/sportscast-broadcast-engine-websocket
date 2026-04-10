@@ -57,7 +57,8 @@ function handleMessage(socket, message) {
     parsed = JSON.parse(message.toString());
   } catch (error) {
     sendJSON(socket, { type: 'error', message: 'Invalid JSON format' });
-} 
+    return;
+  }
   if (parsed.type === 'subscribe' && Number.isInteger(parsed.matchId)) {
     subscribeToMatch(socket, parsed.matchId);
     socket.subscriptions.add(parsed.matchId);
@@ -67,7 +68,6 @@ function handleMessage(socket, message) {
     socket.subscriptions.delete(parsed.matchId);
     sendJSON(socket, { type: 'unsubscribed', matchId: parsed.matchId });
   }
-
 }
 
 export function setupWebSocketServer(server) {
