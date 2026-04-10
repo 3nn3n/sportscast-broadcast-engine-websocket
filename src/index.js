@@ -23,9 +23,10 @@ app.use(getArcjetMiddleware());
 app.use('/matches', matchRouter);
 app.use('/matches/:id/commentary', commentaryRouter); 
 
-const {broadcastMatchCreated} = setupWebSocketServer(server);
+const {broadcastMatchCreated, broadcastCommentary} = setupWebSocketServer(server);
 
 app.locals.broadcastMatchCreated = broadcastMatchCreated;
+app.locals.broadcastCommentary = broadcastCommentary;
 
 server.listen(PORT, HOST, () => {
   const BaseURL = HOST === '0.0.0.0' ? `http://localhost:${PORT}` : `http://${HOST}:${PORT}`;
