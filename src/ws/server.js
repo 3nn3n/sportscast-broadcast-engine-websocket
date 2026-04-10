@@ -23,7 +23,7 @@ function cleanUpSubscriptions(socket) {
   for (const matchId of socket.subscriptions || []) {
     unsubscribeFromMatch(socket, matchId);
   }
-  socket.subscriptions = new Set();
+  socket.subscriptions = [];
 }
 
 
@@ -58,7 +58,7 @@ function handleMessage(socket, message) {
   } catch (error) {
     sendJSON(socket, { type: 'error', message: 'Invalid JSON format' });
     return;
-  }
+} 
   if (parsed.type === 'subscribe' && Number.isInteger(parsed.matchId)) {
     subscribeToMatch(socket, parsed.matchId);
     socket.subscriptions.add(parsed.matchId);
@@ -68,6 +68,7 @@ function handleMessage(socket, message) {
     socket.subscriptions.delete(parsed.matchId);
     sendJSON(socket, { type: 'unsubscribed', matchId: parsed.matchId });
   }
+
 }
 
 export function setupWebSocketServer(server) {
